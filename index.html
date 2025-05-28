@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculadora FAB Copos</title>
+
+  <meta name="theme-color" content="#0d6efd" />
+  <style>
+    :root {
+      --bg-color: #f5f5f5;
+      --text-color: #333;
+      --card-color: #fff;
+      --primary-color: #0d6efd;
+    }
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --text-color: #eee;
+      --card-color: #1f1f1f;
+      --primary-color: #0d6efd;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 20px;
+    }
+    .container {
+      background-color: var(--card-color);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      font-size: 1em;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 1em;
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #084aad;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .toggle-theme {
+      float: right;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 1em;
+    }
+    .linha-seletor {
+      margin-bottom: 15px;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tab {
+      cursor: pointer;
+      padding: 8px 16px;
+      background-color: var(--card-color);
+      border: 1px solid var(--primary-color);
+      border-radius: 8px;
+    }
+    .tab.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    .hidden {
+      display: none;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #ccc;
+    }
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: var(--text-color);
+    }
+    .config-link {
+      cursor: pointer;
+      color: var(--primary-color);
+      font-size: 0.9em;
+      margin-top: 10px;
+      text-align: right;
+      user-select: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="toggle-theme" onclick="toggleTheme()">🌙 Tema</button>
+    
+    <h2>Calculadora FAB Copos</h2>
+
+    <div class="linha-seletor">
+      <label for="linha">Selecione a linha:</label>
+      <select id="linha" onchange="trocarLinha()">
+        <option value="linha1">Linha 1</option>
+        <option value="linha2">Linha 2</option>
+        <option value="linha3">Linha 3</option>
+        <option value="linha4">Linha 4</option>
+        <option value="linha5">Linha 5</option>
+        <option value="linha6">Linha 6</option>
+      </select>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="mostrarAba('calculadora')">Calculadora</div>
+      <div class="tab" onclick="mostrarAba('historico')">Histórico</div>
+    </div>
+
+    <!-- Aba Calculadora -->
+    <div id="calculadora">
+      <label for="metaTurno">Meta do segundo turno (copos):</label>
+      <input type="number" id="metaTurno" min="1" required />
+
+      <label for="producaoDia">Produção total do dia até agora:</label>
+      <input type="number" id="producaoDia" min="0" required />
+
+      <label for="primeiroTurno">Produção do primeiro turno:</label>
+      <input type="number" id="primeiroTurno" min="0" required />
+
+      <label for="horaAtual">Horário atual:</label>
+      <input type="time" id="horaAtual" required />
+
+      <span class="config-link" onclick="toggleConfig()">⚙️ Mostrar/Ocultar Configuração</span>
+
+      <div id="configVelocidade" class="hidden">
+        <label for="velocidade">Velocidade da máquina (copos/min):</label>
+        <input type="number" id="velocidade" min="1" value="170" required />
+      </div>
+
+      <div class="buttons">
+        <button onclick="calcular()">Calcular</button>
+        <button onclick="limparCampos()">Limpar Linha</button>
+      </div>
+
+      <p id="resultado"></p>
+    </div>
+
+    <!-- Aba Histórico -->
+    <div id="historico" class="hidden">
+      <h3>📜 Histórico da Linha</h3>
+      <div id="historicoConteudo">Sem histórico.</div>
+      <div class="buttons">
+        <button onclick="limparHistorico()">🗑️ Limpar Histórico</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Desenvolvido por José Everton</footer>
+
+  <script>
+    const inputs = ["metaTurno", "producaoDia", "primeiroTurno", "horaAtual", "velocidade"];
+
+    window.onload = () => {
+      const temaSalvo = localStorage.getItem("tema");
+      if (temaSalvo) {
+        document.documentElement.setAttribute("data-theme", temaSalvo);
+      }
+      // Esconder configVelocidade por padrão
+      document.getElementById("configVelocidade").classList.add("hidden");
+      carregarDadosLinha();
+    };
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme");
+      const newTheme = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", newTheme);
+      localStorage.setItem("tema", newTheme);
+    }
+
+    function toggleConfig() {
+      const configDiv = document.getElementById("configVelocidade");
+      if (configDiv.classList.contains("hidden")) {
+        configDiv.classList.remove("hidden");
+      } else {
+        configDiv.classList.add("hidden");
+      }
+    }
+
+    function mostrarAba(aba) {
+      document.getElementById('calculadora').classList.toggle('hidden', aba !== 'calculadora');
+      document.getElementById('historico').classList.toggle('hidden', aba !== 'historico');
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(tab => {
+        if (tab.textContent.toLowerCase().includes(aba)) {
+          tab.classList.add('active');
+        }
+      });
+      if (aba === 'historico') carregarHistorico();
+    }
+
+    function getLinhaSelecionada() {
+      return document.getElementById("linha").value;
+    }
+
+    function trocarLinha() {
+      carregarDadosLinha();
+      document.getElementById("resultado").innerText = "";
+      carregarHistorico();
+    }
+
+    function salvarDadosLinha() {
+      const linha = getLinhaSelecionada();
+      const dados = {};
+      inputs.forEach(id => {
+        dados[id] = document.getElementById(id).value;
+      });
+      localStorage.setItem(`dados_${linha}`, JSON.stringify(dados));
+    }
+
+    function carregarDadosLinha() {
+      const linha = getLinhaSelecionada();
+      const dados = JSON.parse(localStorage.getItem(`dados_${linha}`)) || {};
+      inputs.forEach(id => {
+        document.getElementById(id).value = dados[id] || "";
+      });
+      // Se não tiver valor salvo, seta velocidade para 170 por padrão
+      if (!dados["velocidade"]) {
+        document.getElementById("velocidade").value = 170;
+      }
+    }
+
+    function calcular() {
+      const linha = getLinhaSelecionada();
+
+      const metaTurno = parseInt(document.getElementById("metaTurno").value, 10);
+      const producaoDia = parseInt(document.getElementById("producaoDia").value, 10);
+      const primeiroTurno = parseInt(document.getElementById("primeiroTurno").value, 10);
+      const horaAtual = document.getElementById("horaAtual").value;
+      const coposPorMinuto = parseFloat(document.getElementById("velocidade").value);
+
+      if (!metaTurno || isNaN(producaoDia) || isNaN(primeiroTurno) || !horaAtual || isNaN(coposPorMinuto) || coposPorMinuto <= 0) {
+        document.getElementById("resultado").innerText = "⚠️ Preencha todos os campos corretamente.";
+        return;
+      }
+
+      const producaoSegundoTurno = producaoDia - primeiroTurno;
+      const faltante = metaTurno - producaoSegundoTurno;
+      const caixasFaltando = Math.ceil((faltante > 0 ? faltante : 0) / 1200);
+
+      const [hora, minuto] = horaAtual.split(":").map(Number);
+      const minutosAtuais = hora * 60 + minuto;
+      const fimTurno = 13 * 60 + 50;
+      const tempoRestanteMin = fimTurno - minutosAtuais;
+
+      const tempoNecessarioMin = Math.ceil(faltante / coposPorMinuto);
+      const horasNecessarias = Math.floor(tempoNecessarioMin / 60);
+      const minutosNecessarios = tempoNecessarioMin % 60;
+
+      const horasRestantes = Math.floor(tempoRestanteMin / 60);
+      const minutosRestantes = tempoRestanteMin % 60;
+
+      let resultadoHtml = `
+        🏁 Meta do 2º turno: <strong>${metaTurno.toLocaleString()} copos</strong><br>
+        🔄 Produção do 2º turno até agora: <strong>${producaoSegundoTurno.toLocaleString()} copos</strong><br>
+        ❗ Falta produzir: <strong>${faltante > 0 ? faltante.toLocaleString() : 0} copos</strong> (${caixasFaltando} caixas)<br><br>
+      `;
+
+      if (faltante <= 0) {
+        resultadoHtml += `✅ Meta do turno já foi atingida ou ultrapassada!<br>`;
+      } else if (tempoRestanteMin <= 0) {
+        resultadoHtml += `⏰ O turno já terminou!<br>`;
+      } else {
+        resultadoHtml += `
+          ⏱️ Tempo necessário: <strong>${horasNecessarias}h ${minutosNecessarios}min</strong><br>
+          🕒 Tempo restante até 13:50: <strong>${horasRestantes}h ${minutosRestantes}min</strong><br><br>
+          <strong>${tempoNecessarioMin <= tempoRestanteMin
+            ? "✅ Dá tempo de bater a meta!"
+            : "⚠️ Não há tempo suficiente para bater a meta neste ritmo."}</strong>
+        `;
+      }
+
+      document.getElementById("resultado").innerHTML = resultadoHtml;
+
+      salvarDadosLinha();
+      salvarHistorico(linha, resultadoHtml, horaAtual);
+      carregarHistorico();
+    }
+
+    function limparCampos() {
+      const linha = getLinhaSelecionada();
+      inputs.forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("resultado").innerText = "";
+      localStorage.removeItem(`dados_${linha}`);
+    }
+
+    function salvarHistorico(linha, resultado, horaEscolhida) {
+      const historicoKey = `historico_${linha}`;
+      const historico = JSON.parse(localStorage.getItem(historicoKey)) || [];
+      const registro = {
+        data: new Date().toLocaleDateString(),
+        hora: horaEscolhida,
+        resultado: resultado
+      };
+      historico.push(registro);
+      localStorage.setItem(historicoKey, JSON.stringify(historico));
+    }
+
+    function carregarHistorico() {
+      const linha = getLinhaSelecionada();
+      const historicoKey = `historico_${linha}`;
+      const historico = JSON.parse(localStorage.getItem(historicoKey)) || [];
+      const div = document.getElementById("historicoConteudo");
+      if (historico.length === 0) {
+        div.innerHTML = "Sem histórico.";
+        return;
+      }
+      let html = '<ul style="max-height: 200px; overflow-y: auto; padding-left: 20px;">';
+      for (const reg of historico) {
+        html += `<li><strong>${reg.data} ${reg.hora}</strong><br>${reg.resultado}</li><hr>`;
+      }
+      html += "</ul>";
+      div.innerHTML = html;
+    }
+
+    function limparHistorico() {
+      const linha = getLinhaSelecionada();
+      if (confirm("Tem certeza que deseja limpar o histórico desta linha?")) {
+        localStorage.removeItem(`historico_${linha}`);
+        carregarHistorico();
+      }
+    }
+  </script>
+</body>
+</html>
